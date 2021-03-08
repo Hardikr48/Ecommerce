@@ -29,6 +29,26 @@ class UserProfileViewSet(viewsets.ViewSet):
             data = getNegativeResponse("unauthorized user")
             return Response(data)
 
+    @action(detail=False, methods=["POST"])
+    def userupdate(self, request):
+        print(request.data)
+        try:
+            user = self.request.user
+            if user:
+                user = User.objects.get(id=user.id)
+                serializer = UserUpdateSerializer(user, data=request.data)
+
+                if(serializer.is_valid()):
+                    serializer.save()
+                    data = getPositiveResponse("update", serializer.data)
+                    return Response(data)
+                else:
+                    data = getNegativeResponse("serializer is not valid")
+                    return Response(data) 
+        except Exception:
+            data = getNegativeResponse("unauthorized user", status=status.HTTP_400_BAD_REQUEST)
+            return Response(data)
+
     @action(detail=False, methods=["GET"])
     def search(self, request):
         try:
