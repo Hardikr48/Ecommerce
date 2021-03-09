@@ -8,6 +8,25 @@ from account.authentication import CustomAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from helper import getNegativeResponse, getPositiveResponse
+
+class ProductViewSet(viewsets.ViewSet):
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (CustomAuthentication, JSONWebTokenAuthentication)
+    
+    @action(detail=False, methods=["GET"])
+    def productlist(self, request):
+        try:
+            user = self.request.user
+            if user:
+                product = Product.objects.all()
+                serializer = ProductListSerializer(product, many=True)
+                data = getPositiveResponse(
+                    "product list", serializer.data)
+                return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
+
     @action(detail=False, methods=["post"])
     def search(self, request):  
         try:
