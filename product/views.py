@@ -45,6 +45,29 @@ class ProductViewSet(viewsets.ViewSet):
             return Response(data)
 
     @action(detail=False, methods=["post"])
+    def delete(self, request):
+        try:
+            user = self.request.user
+            if user:
+                try:
+                    product = Product.objects.get(id=request.data['id'])
+                except Exception:
+                    data = getNegativeResponse("product is not valid")
+                    return Response(data)
+                operation = product.delete()
+                data={}
+                if operation:
+                    data["success"] = "delete successful"
+                    response = getPositiveResponse("subcategory", data)
+                    return Response(response)
+                else:
+                    data = getNegativeResponse("delete filed")
+                    return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data) 
+
+    @action(detail=False, methods=["post"])
     def add(self, request):
         print(request.data)
         try:
@@ -63,3 +86,27 @@ class ProductViewSet(viewsets.ViewSet):
             data = getNegativeResponse("unauthorized user")
             return Response(data)
 
+    @action(detail=False, methods=["PUT"])
+    def updateproduct(self,request):
+        try:
+            user = self.request.user
+            print(request.data)
+            if user:
+                try:
+                    product = Product.objects.get(id=request.data['id'])
+                except Exception:
+                    data = getNegativeResponse("product is not valid")
+                    return Response(data) 
+                serializer = ProductListSerializer(product, data=request.data)
+
+                if(serializer.is_valid()):
+                    serializer.save()
+                    response = getPositiveResponse(
+                        "update product", serializer.data)
+                    return Response(response)
+                else:
+                    data = getNegativeResponse("serializer is not valid")
+                    return Response(data)   
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
