@@ -8,6 +8,24 @@ from rest_framework.permissions import AllowAny,IsAuthenticated
 from subcategory.serializer import SubCategorySerializer
 from helper import getNegativeResponse, getPositiveResponse
 
+class SubCategoryViewSet(viewsets.ViewSet):
+
+    authentication_classes = (CustomAuthentication, JSONWebTokenAuthentication)
+    permission_classes = (IsAuthenticated,)
+    @action(detail=False, methods=["GET"])
+    def subcategorylist(self, request):
+        try:
+            user = self.request.user
+            if user:
+                subcategory = SubCategory.objects.all()
+                serializer = SubCategorySerializer(subcategory, many=True)
+                data = getPositiveResponse(
+                    "Subcategory list", serializer.data)
+                return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)        
+
     @action(detail=False, methods=["post"])
     def add(self, request):
         try:
