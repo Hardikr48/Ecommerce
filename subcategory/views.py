@@ -27,6 +27,23 @@ class SubCategoryViewSet(viewsets.ViewSet):
             return Response(data)        
 
     @action(detail=False, methods=["post"])
+    def search(self, request):
+        try:
+            user = self.request.user
+            if user:
+                try:
+                    subcategory = SubCategory.objects.filter(name__startswith=request.data['name'])
+                except Exception:
+                    data = getNegativeResponse("subcategory is not valid")
+                    return Response(data)
+                serializer = SubCategorySerializer(subcategory , many= True)
+                data = getPositiveResponse("subcategory", serializer.data)
+                return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
+
+    @action(detail=False, methods=["post"])
     def delete(self, request, pk=None):
         try:
             user = self.request.user
