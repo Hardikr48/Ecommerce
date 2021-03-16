@@ -27,6 +27,26 @@ class SubCategoryViewSet(viewsets.ViewSet):
             return Response(data)        
 
     @action(detail=False, methods=["post"])
+    def delete(self, request, pk=None):
+        try:
+            user = self.request.user
+            if user:
+                try:
+                    subcategory = SubCategory.objects.get(id=request.data['id'])
+                except Exception:
+                    data = getNegativeResponse("subcategory is not valid")
+                    return Response(data)
+                operation = subcategory.delete()
+                data={}
+                if operation:
+                    data["success"] = "delete successful"
+                    response = getPositiveResponse("subcategory", data)
+                    return Response(response)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data) 
+
+    @action(detail=False, methods=["post"])
     def add(self, request):
         try:
             user = self.request.user
@@ -44,3 +64,25 @@ class SubCategoryViewSet(viewsets.ViewSet):
             data = getNegativeResponse("unauthorized user")
             return Response(data) 
 
+    @action(detail=False, methods=["post"])
+    def updatecategory(self,request,pk=None):
+        try:
+            user = self.request.user
+            if user:
+                try:
+                    subcategory = SubCategory.objects.get(id=request.data['id'])
+                except Exception:
+                    data = getNegativeResponse("subcategory is not valid")
+                    return Response(data)
+                serializer = SubCategorySerializer(subcategory, data=request.data)
+                if(serializer.is_valid()):
+                    serializer.save()
+                    response = getPositiveResponse(
+                        "update Category", serializer.data)
+                    return Response(response)
+                else:
+                    data = getNegativeResponse("serializer is not valid")
+                    return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
