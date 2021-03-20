@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'userprofile',
     'category',
     'subcategory',
+    'cartitem',
+    'order',
 ]
 
 MIDDLEWARE_CLASSES = [
