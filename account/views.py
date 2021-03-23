@@ -25,6 +25,17 @@ import datetime
 
 class UserViewSet(viewsets.ViewSet):
 
+    authentication_classes = (CustomAuthentication, JSONWebTokenAuthentication)
+    permission_classes = (AllowAny,)
+    @action(detail=False, methods=["post"])
+    def logout(self, request):
+        token = request.META['HTTP_AUTHORIZATION'][4:]
+        black_list_token = BlackList(token=token)
+        black_list_token.save()
+        response = getNegativeResponse(
+                        "Logout Successfully")
+        return Response(response)
+
     @action(detail=False, methods=["post"])
     def signup(self, request, format=None):
         serializer = UserSerializer(data=request.data)
