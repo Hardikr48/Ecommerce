@@ -25,6 +25,42 @@ import datetime
 
 class UserViewSet(viewsets.ViewSet):
 
+    permission_classes = (AllowAny,)
+    @action(detail=False, methods=["post"])
+    def signin(self, request):
+        try:
+            login_ser = LoginSerializer(data=request.data)
+            if login_ser.is_valid() == False:
+                response = getNegativeResponse(
+                    "enter email and password")
+
+                return Response(response)
+
+            login_data = login_ser.validated_data
+            login_data['email'] = login_data['email'].lower()
+            try:
+                user = User.objects.get(email=login_data['email'])
+            except:
+                return Response("invalid email")
+            
+            if not user.check_password(login_data['password']):
+                return Response("invalid password")
+
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+            payload = jwt_payload_handler(user)
+            token = jwt_encode_handler(payload)
+            print(token)
+            user.last_login = datetime.datetime.now()
+            user.save()
+            print(token)
+            response_token={'first_name':'WelCome to eCommerce site '+user.first_name,'token':'JWT '+token,'id':user.id}
+            response = getPositiveResponse(
+                "Login User", response_token)
+            return Response(response)
+        except Exception as e:
+            return Response(e)
+
     authentication_classes = (CustomAuthentication, JSONWebTokenAuthentication)
     permission_classes = (AllowAny,)
     @action(detail=False, methods=["post"])
