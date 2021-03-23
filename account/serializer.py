@@ -73,3 +73,88 @@ class UserPasswordUpdateSerializer(serializers.Serializer):
         'blank': 'Password may not be blank'
     })
 
+class UserVerificationSerializer(serializers.Serializer):
+    verification_type = serializers.CharField(required=False)
+    verification_token = serializers.CharField(required=False)
+    user = serializers.CharField(required=False)
+    class Meta:
+        model = UserVerification
+        fields = ('user','verification_type', 'verification_token','user')
+
+    def create(self, validated_data):
+        user_verification = None
+        verification_type = UserVerification.USER_VERIFICATION_TYPES[0][0]
+
+        if 'verification_type' in validated_data:
+            verification_type = validated_data['verification_type']
+        user = User.objects.get(id=validated_data['user'])
+    
+        user_verifications = UserVerification.objects.filter(user=user)
+    
+
+        if user_verifications.count() > 0:
+            user_verification = user_verifications[0]
+            user_verification.verification_token = validated_data['verification_token']
+        else: 
+            user_verification = UserVerification(
+                user=user,
+                verification_type=verification_type,
+                verification_token=validated_data['verification_token']
+            )
+        user_verification.save()
+        return user_verification
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, allow_blank=False, error_messages={
+        'required': 'Please enter a valid email address.',
+        'invalid': 'Please enter a valid email address.',
+        'blank': 'Email address may not be blank'
+    })
+
+    class Meta:
+        model = User
+        fields = ('email')
+
+    def update(self, instance, validated_data):
+        verification_token = ""
+        is_unique = False
+        while is_unique != True:
+            verification_token = randomGeneratorCode()
+            try:
+                UserVerification.objects.get(
+                    verification_token=verification_token)
+            except UserVerification.DoesNotExist:
+                is_unique = True
+
+
+        try:
+            
+            user = User.objects.get(id=validated_data['user'])
+            user_verifications = UserVerification.objects.filter(user=user)
+            user_verification_serializer = UserVerificationSerializer(UserVerification.objects.get(
+                user=user,verification_type=UserVerification.USER_VERIFICATION_TYPES[
+                    1][0]
+            ),
+                data={'user': instance.id, 'verification_token': verification_token})
+        except:
+            data={'user': instance.id,
+                'verification_type': UserVerification.USER_VERIFICATION_TYPES[1][0],
+                'verification_token': verification_token
+                }
+            print(data)    
+            user_verification_serializer = UserVerificationSerializer(data={'user': instance.id,
+                                                                            'verification_type': UserVerification.USER_VERIFICATION_TYPES[1][0],
+                                                                            'verification_token': verification_token
+                                                                            }
+                                                                      )
+
+        user_verification_serializer.is_valid(raise_exception=True)
+        user_verification = user_verification_serializer.save()
+        user_verification.created=datetime.datetime.now()
+        user_verification.save()
+        from_email = settings.EMAIL_HOST_USER
+        to_email = validated_data['email']
+        recipient = [to_email]
+        send_mail("message",verification_token, from_email,recipient,fail_silently = False)
+
+        return instance
