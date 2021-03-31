@@ -22,6 +22,20 @@ class CartViewSet(viewsets.ViewSet):
 
     authentication_classes = (CustomAuthentication, JSONWebTokenAuthentication)
     permission_classes = (AllowAny,)
+
+    @action(detail=False, methods=["GET"])
+    def cartlist(self, request):
+        try:
+            user = self.request.user
+            if user:
+                queryset = CartItem.objects.all()
+                serializer = CartListSerializer(queryset, many=True)
+                data = getPositiveResponse(
+                    "List Of Cart", serializer.data)
+                return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
     @action(detail=False, methods=["post"])
     def addcart(self, request):
         try:   
