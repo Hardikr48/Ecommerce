@@ -37,6 +37,32 @@ class CartViewSet(viewsets.ViewSet):
             data = getNegativeResponse("unauthorized user")
             return Response(data)
     @action(detail=False, methods=["post"])
+    def delete(self, request):
+        try:
+            print(request.data)
+            user = self.request.user
+            if user:
+                try:
+                    cart = CartItem.objects.get(product_id=request.data['product'])
+                except:
+                    pass
+                try:
+                    cart = CartItem.objects.get(user_id=request.data['user'])
+                except:
+                    pass
+
+                operation = cart.delete()
+                data={}
+                if operation:
+                    data["success"] = "delete successful"
+                else:
+                    data["failure"] = "delete filed"
+                return Response(data=data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
+
+    @action(detail=False, methods=["post"])
     def addcart(self, request):
         try:   
             user = self.request.user
