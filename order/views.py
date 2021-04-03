@@ -16,6 +16,20 @@ class OrderItemViewSet(viewsets.ViewSet):
     authentication_classes = (CustomAuthentication, JSONWebTokenAuthentication)
     permission_classes = (IsAuthenticated,)
     
+    @action(detail=False, methods=["GET"])
+    def listorder(self, request=None):
+        try:
+            user = self.request.user    
+            if user:
+                user = request.user
+                order_items = Order.objects.filter(user=user) 
+                serializer = OrderSerializer(order_items, many=True)
+                response = getPositiveResponse("User list", serializer.data)
+                return Response(response)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
+
     @action(detail=False, methods=["post"])
     def createorder(self, request):
         try:
