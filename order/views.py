@@ -48,3 +48,19 @@ class OrderItemViewSet(viewsets.ViewSet):
         except Exception:
             data = getNegativeResponse("unauthorized user")
             return Response(data)
+    @action(detail=False, methods=["post"])
+    def search(self, request):
+        try:
+            user = self.request.user
+            if user:
+                try:
+                    order = Order.objects.filter(id=request.data['id']) 
+                except Exception:
+                    data = getNegativeResponse("order is not valid")
+                    return Response(data)
+                serializer = OrderSerializer(order , many= True)
+                data = getPositiveResponse("order", serializer.data)
+                return Response(data)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
