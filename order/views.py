@@ -48,6 +48,33 @@ class OrderItemViewSet(viewsets.ViewSet):
         except Exception:
             data = getNegativeResponse("unauthorized user")
             return Response(data)
+
+    @action(detail=False, methods=["POST"])
+    def rejectorder(self, request):
+        try:
+            user = self.request.user
+            if user:
+                order_status = request.data['status']
+                user = request.user
+                if not order_status == "cancel":
+                    if not user.is_superuser:
+                        raise ValidationError(
+                            {'errror': 'Only Super User perform this action'})
+                try:
+                    order = Order.objects.get(pk=request.data['id'])
+                except Exception:
+                    data = getNegativeResponse("order is not valid")
+                    return Response(data)
+                
+                order.order_status=request.data['status']
+                order.save()
+                response = getPositiveResponse(
+                    "Reject Order", order.order_status)
+                return Response(response)
+        except Exception:
+            data = getNegativeResponse("unauthorized user")
+            return Response(data)
+
     @action(detail=False, methods=["post"])
     def search(self, request):
         try:
